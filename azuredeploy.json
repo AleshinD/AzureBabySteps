@@ -24,22 +24,6 @@
         "description": "Common name for all items in the template"
       }
     },
-    "vnetName": {
-      "type": "string",
-      "defaultValue": "myFancyVnet",
-      "metadata": {
-        "description": "The name of the virtual network"
-      }
-    },
-    "kind": {
-      "type": "string"
-    },
-    "accessTier": {
-      "type": "string"
-    },
-    "supportsHttpsTrafficOnly": {
-      "type": "bool"
-    },
     "keyVaultName": {
       "type": "string",
       "metadata": {
@@ -69,11 +53,7 @@
       "tags": {
         "team": "Storage"
       },
-      "properties": {
-        "accessTier": "[parameters('accessTier')]",
-        "supportsHttpsTrafficOnly": "[parameters('supportsHttpsTrafficOnly')]",
-        "accountType": "[parameters('storageAccountType')]"
-      },
+      "properties": {},
       "dependsOn": [],
       "sku": {
         "name": "[parameters('storageAccountType')]"
