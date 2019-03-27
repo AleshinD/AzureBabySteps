@@ -21,6 +21,7 @@
   },
   "variables": {
       "storageAccountName": "[concat(uniqueString(subscription().subscriptionId), 'storage')]"
+      , "storageKind" : "StorageV2"
   },
   "resources": [
     {
@@ -36,15 +37,8 @@
           "sku": {
               "name": "[parameters('accountType')]"
           },
-          "kind": "[parameters('kind')]"
-      }
-    , {
-            "type": "Microsoft.Resources/resourceGroups",
-            "apiVersion": "2018-05-01",
-            "location": "[parameters('rgLocation')]",
-            "name": "[parameters('rgName')]",
-            "properties": {}
-        }
+          "kind": "[variables('storageKind')]"
+    }
   ],
   "outputs": {}
 }
