@@ -17,12 +17,12 @@
         "Standard_GRS"
       ]
     },
-    "commonName" : {
-      "type" : "string",
-      "metadata" : {
-        "description" : "Common name for all items in the template"
+    "commonName": {
+      "type": "string",
+      "metadata": {
+        "description": "Common name for all items in the template"
       }
-    }, 
+    },
     "kind": {
       "type": "string"
     },
@@ -34,11 +34,11 @@
     }
   },
   "variables": {
-    "storageKind": "StorageV2",
+    "storageKind": "StorageV2"
   },
   "resources": [
     {
-      "name": "[concat(parameters('commonName'), 'storage')]",
+      "name": "[concat(parameters('commonName'), '_storage')]",
       "type": "Microsoft.Storage/storageAccounts",
       "apiVersion": "2018-07-01",
       "location": "[parameters('location')]",
@@ -52,13 +52,6 @@
         "name": "[parameters('storageAccountType')]"
       },
       "kind": "[variables('storageKind')]"
-    },
-    {
-      "type": "Microsoft.Resources/resourceGroups",
-      "apiVersion": "2018-05-01",
-      "location": "[variables('rgLocation')]",
-      "name": "[variables('rgName')]",
-      "properties": {}
     }
   ],
   "outputs": {}
