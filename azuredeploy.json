@@ -37,14 +37,25 @@
       "metadata": {
         "description": "Specifies the name of the key vault."
       }
+    },
+    "webAppsCount": {
+      "type": "int",
+      "defaultValue": 2,
+      "metadata": {
+        "description": "Specifies number of web app nodes in the template"
+      }
     }
   },
   "variables": {
-    "storageKind": "StorageV2"
+    "storageKind": "StorageV2",
+    "keyVaultName": "[concat(parameters('commonName'), '_keyVault')]",
+    "storageName": "[concat(parameters('commonName'), '_storage')]",
+    "webVmName": "[concat(parameters('commonName'), '_webVM')]",
+    "niName": "[concat(variables('webVmName'), '_NI')]]"
   },
   "resources": [
     {
-      "name": "[concat(parameters('commonName'), '_storage')]",
+      "name": "variables('storageName')",
       "type": "Microsoft.Storage/storageAccounts",
       "apiVersion": "2018-07-01",
       "location": "[parameters('location')]",
@@ -60,54 +71,49 @@
       "kind": "[variables('storageKind')]"
     },
     {
+      "apiVersion": "2017-03-30",
+      "type": "Microsoft.Compute/virtualMachines",
+      "name": "[variables('webVmName')]",
+      "location": "[parameters('location')]",
+      "dependsOn": [
+        "[concat('Microsoft.Network/networkInterfaces/', variables('niName'))]"
+      ],
+      "copy": {
+        "name": "vmcopy",
+        "count": "[parameters('webAppsCount')]"
+      },
+      "properties": {}
+    },
+    {
+      "apiVersion": "2015-05-01-preview",
+      "type": "Microsoft.Network/networkInterfaces",
+      "name": "[variables('niName')]",
+      "location": "[parameters('location')]",
+      "dependsOn": [],
+      "copy": {
+        "name": "nicopy",
+        "count": "[parameters('webAppsCount')]"
+      },
+      "properties": {}
+    },
+    {
       "type": "Microsoft.KeyVault/vaults",
-      "name": "[parameters('keyVaultName')]",
+      "name": "[variables('keyVaultName')]",
       "location": "[parameters('location')]",
       "apiVersion": "2018-02-14",
       "tags": {
         "displayName": "KeyVault"
       },
-      "properties": {
-        "enabledForDeployment": "[parameters('enabledForDeployment')]",
-        "enabledForTemplateDeployment": "[parameters('enabledForTemplateDeployment')]",
-        "enabledForDiskEncryption": "[parameters('enabledForDiskEncryption')]",
-        "tenantId": "[parameters('tenantId')]",
-        "accessPolicies": [
-          {
-            "objectId": "[parameters('objectId')]",
-            "tenantId": "[parameters('tenantId')]",
-            "permissions": {
-              "keys": "[parameters('keysPermissions')]",
-              "secrets": "[parameters('secretsPermissions')]"
-            }
-          }
-        ],
-        "sku": {
-          "name": "[parameters('skuName')]",
-          "family": "A"
-        },
-        "networkAcls": {
-          "value": {
-            "defaultAction": "Allow",
-            "bypass": "AzureServices"
-          }
-        }
-      }
+      "properties": {}
     },
     {
       "type": "Microsoft.KeyVault/vaults/secrets",
-      "name": "[concat(parameters('keyVaultName'), '/', parameters('secretsObject').secrets[copyIndex()].secretName)]",
+      "name": "[concat(variables('keyVaultName'), '_secret')]",
       "apiVersion": "2018-02-14",
       "dependsOn": [
-        "[concat('Microsoft.KeyVault/vaults/', parameters('keyVaultName'))]"
+        "[concat('Microsoft.KeyVault/vaults/', variables('keyVaultName'))]"
       ],
-      "copy": {
-        "name": "secretsCopy",
-        "count": "[length(parameters('secretsObject').secrets)]"
-      },
-      "properties": {
-        "value": "[parameters('secretsObject').secrets[copyIndex()].secretValue]"
-      }
+      "properties": {}
     }
   ],
   "outputs": {}
