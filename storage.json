@@ -22,7 +22,7 @@
       "storageAccountName": "[concat(uniqueString(subscription().subscriptionId), 'storage')]"
       , "storageKind" : "StorageV2"
       , "rgName" : "infraGroup"
-      , "rgLocation" : "Standard_LRS'
+      , "rgLocation" : "Standard_LRS"
   },
   "resources": [
     {
