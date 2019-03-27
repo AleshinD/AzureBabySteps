@@ -22,7 +22,7 @@
       "metadata" : {
         "description" : "Common name for all items in the template"
       }
-    }
+    }, 
     "kind": {
       "type": "string"
     },
