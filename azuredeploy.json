@@ -1,0 +1,51 @@
+{
+  "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+  "contentVersion": "1.0.0.0",
+  "parameters": {
+    "location": {
+      "type": "string"
+    },
+    "accountType": {
+      "type": "string"
+    },
+    "kind": {
+      "type": "string"
+    },
+    "accessTier": {
+      "type": "string"
+    },
+    "supportsHttpsTrafficOnly": {
+      "type": "bool"
+    }
+  },
+  "variables": {
+    "storageAccountName": "[concat(uniqueString(resourceGroup().name), 'storage')]",
+    "storageKind": "StorageV2",
+  },
+  "resources": [
+    {
+      "name": "[variables('storageAccountName')]",
+      "type": "Microsoft.Storage/storageAccounts",
+      "apiVersion": "2018-07-01",
+      "location": "[parameters('location')]",
+      "resourceGroup": "infraGroup",
+      "properties": {
+        "accessTier": "[parameters('accessTier')]",
+        "supportsHttpsTrafficOnly": "[parameters('supportsHttpsTrafficOnly')]"
+      },
+      "dependsOn": [],
+      "sku": {
+        "name": "[parameters('accountType')]"
+      },
+      "kind": "[variables('storageKind')]"
+    },
+    {
+      "type": "Microsoft.Resources/resourceGroups",
+      "apiVersion": "2018-05-01",
+      "location": "[variables('rgLocation')]",
+      "name": "[variables('rgName')]",
+      "properties": {}
+    }
+  ],
+  "outputs": {}
+}
