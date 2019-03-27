@@ -3,11 +3,26 @@
   "contentVersion": "1.0.0.0",
   "parameters": {
     "location": {
-      "type": "string"
+      "type": "string",
+      "defaultValue": "[resourceGroup().location]",
+      "metadata": {
+        "description": "Location for all resources."
+      }
     },
-    "accountType": {
-      "type": "string"
+    "storageAccountType": {
+      "type": "string",
+      "defaultValue": "Standard_LRS",
+      "allowedValues": [
+        "Standard_LRS",
+        "Standard_GRS"
+      ]
     },
+    "commonName" : {
+      "type" : "string",
+      "metadata" : {
+        "description" : "Common name for all items in the template"
+      }
+    }
     "kind": {
       "type": "string"
     },
@@ -19,23 +34,22 @@
     }
   },
   "variables": {
-    "storageAccountName": "[concat(uniqueString(resourceGroup().name), 'storage')]",
     "storageKind": "StorageV2",
   },
   "resources": [
     {
-      "name": "[variables('storageAccountName')]",
+      "name": "[concat(parameters('commonName'), 'storage')]",
       "type": "Microsoft.Storage/storageAccounts",
       "apiVersion": "2018-07-01",
       "location": "[parameters('location')]",
-      "resourceGroup": "infraGroup",
       "properties": {
         "accessTier": "[parameters('accessTier')]",
-        "supportsHttpsTrafficOnly": "[parameters('supportsHttpsTrafficOnly')]"
+        "supportsHttpsTrafficOnly": "[parameters('supportsHttpsTrafficOnly')]",
+        "accountType": "[parameters('storageAccountType')]"
       },
       "dependsOn": [],
       "sku": {
-        "name": "[parameters('accountType')]"
+        "name": "[parameters('storageAccountType')]"
       },
       "kind": "[variables('storageKind')]"
     },
