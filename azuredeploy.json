@@ -19,8 +19,16 @@
     },
     "commonName": {
       "type": "string",
+      "defaultValue": "myCommonName",
       "metadata": {
         "description": "Common name for all items in the template"
+      }
+    },
+    "vnetName": {
+      "type": "string",
+      "defaultValue": "myFancyVnet",
+      "metadata": {
+        "description": "The name of the virtual network"
       }
     },
     "kind": {
@@ -37,21 +45,20 @@
       "metadata": {
         "description": "Specifies the name of the key vault."
       }
-    },
-    "webAppsCount": {
-      "type": "int",
-      "defaultValue": 2,
-      "metadata": {
-        "description": "Specifies number of web app nodes in the template"
-      }
     }
   },
   "variables": {
     "storageKind": "StorageV2",
     "keyVaultName": "[concat(parameters('commonName'), '_keyVault')]",
     "storageName": "[concat(parameters('commonName'), '_storage')]",
+    "storageVmName": "[concat(parameters('commonName'), '_storageVM')]",
     "webVmName": "[concat(parameters('commonName'), '_webVM')]",
-    "niName": "[concat(variables('webVmName'), '_NI')]]"
+    "webNiName": "[concat(variables('webVmName'), '_NI')]",
+    "storageNiName": "[concat(variables('storageVmName'), '_NI')]",
+    "webName": "[concat(parameters('commonName'), '_webApp')]",
+    "vnetName": "[concat(parameters('commonName'), '_vnet')]",
+    "lbName": "[concat(parameters('commonName'), '_lb')]",
+    "publicIPAddressName": "[concat(parameters('commonName'), '_pIP')]"
   },
   "resources": [
     {
@@ -59,6 +66,9 @@
       "type": "Microsoft.Storage/storageAccounts",
       "apiVersion": "2018-07-01",
       "location": "[parameters('location')]",
+      "tags": {
+        "team": "Storage"
+      },
       "properties": {
         "accessTier": "[parameters('accessTier')]",
         "supportsHttpsTrafficOnly": "[parameters('supportsHttpsTrafficOnly')]",
@@ -73,37 +83,92 @@
     {
       "apiVersion": "2017-03-30",
       "type": "Microsoft.Compute/virtualMachines",
-      "name": "[variables('webVmName')]",
+      "name": "[variables('storageVmName')]",
       "location": "[parameters('location')]",
-      "dependsOn": [
-        "[concat('Microsoft.Network/networkInterfaces/', variables('niName'))]"
-      ],
-      "copy": {
-        "name": "vmcopy",
-        "count": "[parameters('webAppsCount')]"
+      "tags": {
+        "team": "Storage"
       },
+      "dependsOn": [
+        "[concat('Microsoft.Storage/storageAccounts/', variables('storageName'))]",
+        "[concat('Microsoft.Network/networkInterfaces/', concat(variables('storageNiName'), '_dmz'))]"
+      ],
       "properties": {}
     },
     {
       "apiVersion": "2015-05-01-preview",
       "type": "Microsoft.Network/networkInterfaces",
-      "name": "[variables('niName')]",
+      "name": "[concat(variables('storageNiName'), '_dmz')]",
       "location": "[parameters('location')]",
-      "dependsOn": [],
-      "copy": {
-        "name": "nicopy",
-        "count": "[parameters('webAppsCount')]"
+      "tags": {
+        "team": "Storage"
       },
+      "dependsOn": [
+        "[concat('Microsoft.Network/virtualNetworks/', variables('vnetName'))]"
+      ],
+      "properties": {}
+    },
+    {
+      "type": "Microsoft.Web/sites",
+      "name": "[variables('webName')]",
+      "apiVersion": "2016-03-01",
+      "location": "[parameters('location')]",
+      "tags": {
+        "team": "Web"
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.Web/certificates', parameters('certificateName'))]"
+      ],
+      "properties": {}
+    },
+    {
+      "apiVersion": "2017-03-30",
+      "type": "Microsoft.Compute/virtualMachines",
+      "name": "[variables('webVmName')]",
+      "location": "[parameters('location')]",
+      "tags": {
+        "team": "Web"
+      },
+      "dependsOn": [
+        "[concat('Microsoft.Web/sites/', variables('webName'))]",
+        "[concat('Microsoft.Network/networkInterfaces/', concat(variables('webNiName'), '_public'))]",
+        "[concat('Microsoft.Network/networkInterfaces/', concat(variables('webNiName'), '_dmz'))]"
+      ],
+      "properties": {}
+    },
+    {
+      "apiVersion": "2015-05-01-preview",
+      "type": "Microsoft.Network/networkInterfaces",
+      "name": "[concat(variables('webNiName'), '_public')]",
+      "tags": {
+        "team": "Web"
+      },
+      "location": "[parameters('location')]",
+      "dependsOn": [
+        "[concat('Microsoft.Network/loadBalancers/', variables('lbName'))]"
+      ],
+      "properties": {}
+    },
+    {
+      "apiVersion": "2015-05-01-preview",
+      "type": "Microsoft.Network/networkInterfaces",
+      "name": "[concat(variables('webNiName'), '_dmz')]",
+      "tags": {
+        "team": "Web"
+      },
+      "location": "[parameters('location')]",
+      "dependsOn": [
+        "[concat('Microsoft.Network/virtualNetworks/', variables('vnetName'))]"
+      ],
       "properties": {}
     },
     {
       "type": "Microsoft.KeyVault/vaults",
       "name": "[variables('keyVaultName')]",
       "location": "[parameters('location')]",
-      "apiVersion": "2018-02-14",
       "tags": {
-        "displayName": "KeyVault"
+        "team": "Infra"
       },
+      "apiVersion": "2018-02-14",
       "properties": {}
     },
     {
@@ -113,6 +178,44 @@
       "dependsOn": [
         "[concat('Microsoft.KeyVault/vaults/', variables('keyVaultName'))]"
       ],
+      "properties": {
+        "accessPolicies": {
+          "tenantId": "[reference(concat('Microsoft.Web/sites/', variables('webName')), '2018-02-01', 'Full').identity.tenantId]",
+          "objectId": "[reference(concat('Microsoft.Web/sites/', variables('webName')), '2018-02-01', 'Full').identity.principalId]"
+        }
+      }
+    },
+    {
+      "apiVersion": "2015-05-01-preview",
+      "type": "Microsoft.Network/virtualNetworks",
+      "name": "[variables('vnetName')]",
+      "location": "[parameters('location')]",
+      "tags": {
+        "team": "Infra"
+      },
+      "properties": {}
+    },
+    {
+      "apiVersion": "2015-05-01-preview",
+      "name": "[variables('lbName')]",
+      "type": "Microsoft.Network/loadBalancers",
+      "location": "[parameters('location')]",
+      "tags": {
+        "team": "Infra"
+      },
+      "dependsOn": [
+        "[concat('Microsoft.Network/publicIPAddresses/', variables('publicIPAddressName'))]"
+      ],
+      "properties": {}
+    },
+    {
+      "apiVersion": "2015-05-01-preview",
+      "type": "Microsoft.Network/publicIPAddresses",
+      "name": "[variables('publicIPAddressName')]",
+      "location": "[parameters('location')]",
+      "tags": {
+        "team": "Infra"
+      },
       "properties": {}
     }
   ],
