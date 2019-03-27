@@ -21,6 +21,8 @@
   "variables": {
       "storageAccountName": "[concat(uniqueString(subscription().subscriptionId), 'storage')]"
       , "storageKind" : "StorageV2"
+      , "rgName" : "infraGroup"
+      , "rgLocation" : "Standard_LRS'
   },
   "resources": [
     {
@@ -28,6 +30,7 @@
           "type": "Microsoft.Storage/storageAccounts",
           "apiVersion": "2018-07-01",
           "location": "[parameters('location')]",
+          "resource-group" : "infraGroup"
           "properties": {
               "accessTier": "[parameters('accessTier')]",
               "supportsHttpsTrafficOnly": "[parameters('supportsHttpsTrafficOnly')]"
@@ -38,6 +41,13 @@
           },
           "kind": "[variables('storageKind')]"
     }
+    ,{
+            "type": "Microsoft.Resources/resourceGroups",
+            "apiVersion": "2018-05-01",
+            "location": "[variables('rgLocation')]",
+            "name": "[variables('rgName')]",
+            "properties": {}
+        }
   ],
   "outputs": {}
 }
