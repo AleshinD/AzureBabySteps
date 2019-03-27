@@ -22,7 +22,7 @@
       "storageAccountName": "[concat(uniqueString(subscription().subscriptionId), 'storage')]"
   },
   "resources": [
-      {
+    {
           "name": "[variables('storageAccountName')]",
           "type": "Microsoft.Storage/storageAccounts",
           "apiVersion": "2018-07-01",
@@ -37,6 +37,13 @@
           },
           "kind": "[parameters('kind')]"
       }
+    , {
+            "type": "Microsoft.Resources/resourceGroups",
+            "apiVersion": "2018-05-01",
+            "location": "[parameters('rgLocation')]",
+            "name": "[parameters('rgName')]",
+            "properties": {}
+        }
   ],
   "outputs": {}
 }
